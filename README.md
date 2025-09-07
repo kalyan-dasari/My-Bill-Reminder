@@ -60,18 +60,7 @@ A simple, local-first web application for managing your personal finances, bill 
     Open your web browser and navigate to:
     `http://127.0.0.1:5000`
 
-## 📄 File Structure
-bill_reminder/
-├── app.py           # Main Flask application file
-├── database.py      # Database initialization and connection
-├── static/
-│   ├── css/
-│   │   └── style.css  # Custom styles
-│   └── js/
-│       └── script.js  # JavaScript for dynamic forms
-└── templates/
-├── dashboard.html   # Main dashboard interface
-└── paid.html        # History of paid bills
+<img width="637" height="405" alt="image" src="https://github.com/user-attachments/assets/0d1f2b4b-c54b-4f19-b569-3fca7b7a4089" />
 
 
 ## 🤝 Contribution
