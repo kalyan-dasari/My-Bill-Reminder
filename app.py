@@ -114,6 +114,24 @@ def mark_paid(type, id):
     conn.close()
     return redirect(url_for('dashboard'))
 
+@app.route('/delete/<type>/<int:id>', methods=['POST'])
+def delete_item(type, id):
+    conn = get_db_connection()
+    if type == 'monthly':
+        conn.execute('DELETE FROM monthly_bills WHERE id = ?', (id,))
+    elif type == 'custom':
+        conn.execute('DELETE FROM custom_bills WHERE id = ?', (id,))
+    elif type == 'recharge':
+        conn.execute('DELETE FROM recharges WHERE id = ?', (id,))
+    elif type == 'emi':
+        conn.execute('DELETE FROM emis WHERE id = ?', (id,))
+    elif type == 'event':
+        conn.execute('DELETE FROM events WHERE id = ?', (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('dashboard'))
+
+
 @app.route('/add/<type>', methods=['POST'])
 def add_item(type):
     conn = get_db_connection()
