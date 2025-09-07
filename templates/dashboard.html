@@ -76,8 +76,11 @@
                             </p>
                             <div class="d-flex justify-content-between mt-2">
                                 <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editModal" data-id="{{ recharge.id }}" data-type="recharge">Edit</button>
-                                <form action="{{ url_for('mark_paid', type='recharge', id=recharge.id) }}" method="post">
+                                <form action="{{ url_for('mark_paid', type='recharge', id=recharge.id) }}" method="post" style="display:inline;">
                                     <button type="submit" class="btn btn-success btn-sm"><i class="fa-solid fa-check"></i> Mark as Done</button>
+                                </form>
+                                <form action="{{ url_for('delete_item', type='recharge', id=recharge.id) }}" method="post" style="display:inline;">
+                                    <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash-alt"></i> Delete</button>
                                 </form>
                             </div>
                         </div>
@@ -111,8 +114,11 @@
                             </p>
                             <div class="d-flex justify-content-between mt-2">
                                 <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editModal" data-id="{{ bill.id }}" data-type="{{ bill.type }}">Edit</button>
-                                <form action="{{ url_for('mark_paid', type=bill.type, id=bill.id) }}" method="post">
+                                <form action="{{ url_for('mark_paid', type=bill.type, id=bill.id) }}" method="post" style="display:inline;">
                                     <button type="submit" class="btn btn-success btn-sm"><i class="fa-solid fa-check"></i> Mark Paid</button>
+                                </form>
+                                <form action="{{ url_for('delete_item', type=bill.type, id=bill.id) }}" method="post" style="display:inline;">
+                                    <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash-alt"></i> Delete</button>
                                 </form>
                             </div>
                         </div>
@@ -131,9 +137,16 @@
                     <div class="card-body">
                         <h5 class="card-title">EMIs</h5>
                         {% for emi in emis %}
-                            <p class="mb-1">
-                                <strong>{{ emi.emi_name }}</strong>: ₹{{ '%.2f'|format(emi.amount) }} on {{ emi.due_date }}
-                                <button class="btn btn-sm btn-outline-secondary ms-2" data-bs-toggle="modal" data-bs-target="#editModal" data-id="{{ emi.id }}" data-type="emi">Edit</button>
+                            <p class="mb-1 d-flex justify-content-between align-items-center">
+                                <span>
+                                    <strong>{{ emi.emi_name }}</strong>: ₹{{ '%.2f'|format(emi.amount) }} on {{ emi.due_date }}
+                                </span>
+                                <span>
+                                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editModal" data-id="{{ emi.id }}" data-type="emi">Edit</button>
+                                    <form action="{{ url_for('delete_item', type='emi', id=emi.id) }}" method="post" style="display:inline;">
+                                        <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash-alt"></i></button>
+                                    </form>
+                                </span>
                             </p>
                         {% else %}
                             <p>No EMIs to display.</p>
@@ -146,52 +159,21 @@
                     <div class="card-body">
                         <h5 class="card-title">Events</h5>
                         {% for event in events %}
-                            <p class="mb-1">
-                                <strong>{{ event.event_name }}</strong> on {{ event.event_date }}
-                                <button class="btn btn-sm btn-outline-secondary ms-2" data-bs-toggle="modal" data-bs-target="#editModal" data-id="{{ event.id }}" data-type="event">Edit</button>
+                            <p class="mb-1 d-flex justify-content-between align-items-center">
+                                <span>
+                                    <strong>{{ event.event_name }}</strong> on {{ event.event_date }}
+                                </span>
+                                <span>
+                                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editModal" data-id="{{ event.id }}" data-type="event">Edit</button>
+                                    <form action="{{ url_for('delete_item', type='event', id=event.id) }}" method="post" style="display:inline;">
+                                        <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash-alt"></i></button>
+                                    </form>
+                                </span>
                             </p>
                         {% else %}
                             <p>No events to display.</p>
                         {% endfor %}
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="addItemModal" tabindex="-1" aria-labelledby="addItemModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addItemModalLabel">Add New Item</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="addItemForm" method="post">
-                        </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary" form="addItemForm">Save</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editModalLabel">Edit Item</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="editForm" method="post">
-                        </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary" form="editForm">Save Changes</button>
                 </div>
             </div>
         </div>
