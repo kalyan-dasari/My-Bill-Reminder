@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Bill & Reminder Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Personal Dashboard 🚀</h1>
+        
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card summary-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Monthly Summary</h5>
+                        <p class="card-text">
+                            <i class="fa-solid fa-hourglass-half"></i> Upcoming: <span class="text-warning">₹{{ '%.2f'|format(total_upcoming_amount) }}</span>
+                            <br>
+                            <i class="fa-solid fa-circle-check"></i> Paid: <span class="text-success">₹{{ '%.2f'|format(total_paid_amount) }}</span>
+                        </p>
+                        <a href="{{ url_for('paid_bills') }}" class="btn btn-sm btn-info mt-2">View Paid Bills</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Add New Item</h5>
+                        <form id="add-form" class="row g-2">
+                            <div class="col-md-4">
+                                <label for="itemType" class="form-label">Type</label>
+                                <select class="form-select" id="itemType" name="itemType">
+                                    <option value="monthly_bill">Monthly Bill</option>
+                                    <option value="custom_bill">Custom Bill</option>
+                                    <option value="recharge">Recharge</option>
+                                    <option value="emi">EMI</option>
+                                    <option value="event">Event</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8 d-flex align-items-end">
+                                <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#addItemModal" id="openModalBtn">
+                                    <i class="fa-solid fa-plus"></i> Add Item
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="mt-4">Upcoming Recharges</h2>
+        <hr>
+        <div class="row">
+            {% for recharge in recharges %}
+                <div class="col-md-4 mb-3">
+                    <div class="card {% if recharge.remaining_days < 0 %}card-overdue{% elif recharge.remaining_days <= 7 %}card-due-soon{% else %}card-upcoming{% endif %}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="card-title">{{ recharge.contact_name }}</h5>
+                                <span class="badge {% if recharge.remaining_days < 0 %}bg-danger{% elif recharge.remaining_days <= 7 %}bg-warning{% else %}bg-success{% endif %}">
+                                    {% if recharge.remaining_days < 0 %}
+                                        Expired
+                                    {% else %}
+                                        {{ recharge.remaining_days }} days left
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <p class="card-text">
+                                <i class="fa-solid fa-phone"></i> Plan Amount: ₹{{ '%.2f'|format(recharge.plan_amount) }}<br>
+                                <i class="fa-solid fa-calendar-alt"></i> Expiring: {{ recharge.expiry_date|strftime('%Y-%m-%d') }}
+                            </p>
+                            <div class="d-flex justify-content-between mt-2">
+                                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editModal" data-id="{{ recharge.id }}" data-type="recharge">Edit</button>
+                                <form action="{{ url_for('mark_paid', type='recharge', id=recharge.id) }}" method="post">
+                                    <button type="submit" class="btn btn-success btn-sm"><i class="fa-solid fa-check"></i> Mark as Done</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <p>No upcoming recharges found.</p>
+            {% endfor %}
+        </div>
+        
+        <h2 class="mt-4">Upcoming Bills</h2>
+        <hr>
+        <div class="row">
+            {% for bill in upcoming_bills %}
+                <div class="col-md-4 mb-3">
+                    <div class="card {% if bill.remaining_days < 0 %}card-overdue{% elif bill.remaining_days <= 3 %}card-due-soon{% else %}card-upcoming{% endif %}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="card-title">{{ bill.bill_name }}</h5>
+                                <span class="badge {% if bill.remaining_days < 0 %}bg-danger{% elif bill.remaining_days <= 3 %}bg-warning{% else %}bg-success{% endif %}">
+                                    {% if bill.remaining_days < 0 %}
+                                        Overdue
+                                    {% else %}
+                                        {{ bill.remaining_days }} days left
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <p class="card-text">
+                                <i class="fa-solid fa-calendar-alt"></i> Due: {{ bill.due_date }}<br>
+                                <i class="fa-solid fa-money-bill-wave"></i> Amount: ₹{{ '%.2f'|format(bill.amount) }}
+                            </p>
+                            <div class="d-flex justify-content-between mt-2">
+                                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editModal" data-id="{{ bill.id }}" data-type="{{ bill.type }}">Edit</button>
+                                <form action="{{ url_for('mark_paid', type=bill.type, id=bill.id) }}" method="post">
+                                    <button type="submit" class="btn btn-success btn-sm"><i class="fa-solid fa-check"></i> Mark Paid</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <p>No upcoming bills found. Everything is paid!</p>
+            {% endfor %}
+        </div>
+
+        <h2 class="mt-4">Other Reminders</h2>
+        <hr>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">EMIs</h5>
+                        {% for emi in emis %}
+                            <p class="mb-1">
+                                <strong>{{ emi.emi_name }}</strong>: ₹{{ '%.2f'|format(emi.amount) }} on {{ emi.due_date }}
+                                <button class="btn btn-sm btn-outline-secondary ms-2" data-bs-toggle="modal" data-bs-target="#editModal" data-id="{{ emi.id }}" data-type="emi">Edit</button>
+                            </p>
+                        {% else %}
+                            <p>No EMIs to display.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Events</h5>
+                        {% for event in events %}
+                            <p class="mb-1">
+                                <strong>{{ event.event_name }}</strong> on {{ event.event_date }}
+                                <button class="btn btn-sm btn-outline-secondary ms-2" data-bs-toggle="modal" data-bs-target="#editModal" data-id="{{ event.id }}" data-type="event">Edit</button>
+                            </p>
+                        {% else %}
+                            <p>No events to display.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addItemModal" tabindex="-1" aria-labelledby="addItemModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addItemModalLabel">Add New Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addItemForm" method="post">
+                        </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" form="addItemForm">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Edit Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm" method="post">
+                        </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" form="editForm">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
