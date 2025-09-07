@@ -61,3 +61,23 @@ A simple, local-first web application for managing your personal finances, bill 
     `http://127.0.0.1:5000`
 
 ## 📄 File Structure
+bill_reminder/
+├── app.py           # Main Flask application file
+├── database.py      # Database initialization and connection
+├── static/
+│   ├── css/
+│   │   └── style.css  # Custom styles
+│   └── js/
+│       └── script.js  # JavaScript for dynamic forms
+└── templates/
+├── dashboard.html   # Main dashboard interface
+└── paid.html        # History of paid bills
+
+
+## 🤝 Contribution
+
+Contributions, issues, and feature requests are welcome. Feel free to check the [issues page](https://github.com/your-username/your-repository-name/issues).
+
+---
+
+This README provides all the necessary information for anyone to understand, run, and potentially contribute to your project. Remember to replace `your-username/your-repository-name` with your actual GitHub details.
