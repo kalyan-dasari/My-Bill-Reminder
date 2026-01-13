@@ -65,7 +65,7 @@ A simple, local-first web application for managing your personal finances, bill 
 
 ## 🤝 Contribution
 
-Contributions, issues, and feature requests are welcome. Feel free to check the [issues page](https://github.com/kalyan-dasari/your-repository-name/issues).
+Contributions, issues, and feature requests are welcome. Feel free to check the [issues page](https://github.com/kalyan-dasari/My-Bill-Reminder/issues).
 
 ---
 This page is live at render: https://my-bill-reminder.onrender.com/
