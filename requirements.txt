@@ -1,2 +1,3 @@
-Flask
-gunicorn
+Flask>=3.0,<4.0
+Flask-WTF>=1.2,<2.0
+gunicorn>=21.2,<23.0

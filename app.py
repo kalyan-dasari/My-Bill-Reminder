@@ -1,10 +1,12 @@
 import os
 import datetime
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, abort
+from flask_wtf.csrf import CSRFProtect
 from database import get_db_connection, init_db
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.urandom(24)
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(24))
+csrf = CSRFProtect(app)
 
 # Use a flag to ensure the database is initialized only once
 db_initialized = False
@@ -28,6 +30,25 @@ def format_datetime(value, format="%Y-%m-%d"):
         except ValueError:
             return value
     return value
+
+def validate_date(date_str):
+    try:
+        datetime.datetime.strptime(date_str, '%Y-%m-%d')
+        return True
+    except (ValueError, TypeError):
+        return False
+
+def validate_amount(amount_str):
+    try:
+        val = float(amount_str)
+        return val > 0
+    except (ValueError, TypeError):
+        return False
+
+def validate_required(value, max_length=200):
+    if not value or not isinstance(value, str):
+        return False
+    return 0 < len(value.strip()) <= max_length
 
 @app.route('/')
 def dashboard():
@@ -134,52 +155,146 @@ def delete_item(type, id):
 
 @app.route('/add/<type>', methods=['POST'])
 def add_item(type):
-    conn = get_db_connection()
+    data = request.form
+    errors = []
+    
     if type == 'recharge':
-        data = request.form
-        conn.execute('INSERT INTO recharges (contact_name, recharge_date, valid_days, plan_amount) VALUES (?, ?, ?, ?)',
-                     (data['contact_name'], data['recharge_date'], data['valid_days'], data['plan_amount']))
+        if not validate_required(data.get('contact_name')):
+            errors.append('Contact name is required (max 200 chars)')
+        if not validate_date(data.get('recharge_date')):
+            errors.append('Invalid recharge date')
+        try:
+            valid_days = int(data.get('valid_days', 0))
+            if valid_days <= 0:
+                errors.append('Valid days must be positive')
+        except (ValueError, TypeError):
+            errors.append('Valid days must be a number')
+        if not validate_amount(data.get('plan_amount')):
+            errors.append('Plan amount must be a positive number')
     elif type == 'emi':
-        data = request.form
-        conn.execute('INSERT INTO emis (emi_name, due_date, amount) VALUES (?, ?, ?)',
-                     (data['emi_name'], data['due_date'], data['amount']))
+        if not validate_required(data.get('emi_name')):
+            errors.append('EMI name is required')
+        if not validate_date(data.get('due_date')):
+            errors.append('Invalid due date')
+        if not validate_amount(data.get('amount')):
+            errors.append('Amount must be a positive number')
     elif type == 'event':
-        data = request.form
-        conn.execute('INSERT INTO events (event_name, event_date, notes) VALUES (?, ?, ?)',
-                     (data['event_name'], data['event_date'], data['notes']))
+        if not validate_required(data.get('event_name')):
+            errors.append('Event name is required')
+        if not validate_date(data.get('event_date')):
+            errors.append('Invalid event date')
     elif type == 'monthly_bill':
-        data = request.form
-        conn.execute('INSERT INTO monthly_bills (bill_name, amount, due_date) VALUES (?, ?, ?)',
-                     (data['bill_name'], data['amount'], data['due_date']))
+        if not validate_required(data.get('bill_name')):
+            errors.append('Bill name is required')
+        if not validate_amount(data.get('amount')):
+            errors.append('Amount must be a positive number')
+        if not validate_date(data.get('due_date')):
+            errors.append('Invalid due date')
     elif type == 'custom_bill':
-        data = request.form
-        conn.execute('INSERT INTO custom_bills (bill_name, bill_type, due_date, amount) VALUES (?, ?, ?, ?)',
-                     (data['bill_name'], data['bill_type'], data['due_date'], data['amount']))
-    conn.commit()
-    conn.close()
+        if not validate_required(data.get('bill_name')):
+            errors.append('Bill name is required')
+        if not validate_required(data.get('bill_type')):
+            errors.append('Bill type is required')
+        if not validate_date(data.get('due_date')):
+            errors.append('Invalid due date')
+        if not validate_amount(data.get('amount')):
+            errors.append('Amount must be a positive number')
+    else:
+        abort(400)
+    
+    if errors:
+        return jsonify({'errors': errors}), 400
+    
+    conn = get_db_connection()
+    try:
+        if type == 'recharge':
+            conn.execute('INSERT INTO recharges (contact_name, recharge_date, valid_days, plan_amount) VALUES (?, ?, ?, ?)',
+                         (data['contact_name'].strip(), data['recharge_date'], int(data['valid_days']), float(data['plan_amount'])))
+        elif type == 'emi':
+            conn.execute('INSERT INTO emis (emi_name, due_date, amount) VALUES (?, ?, ?)',
+                         (data['emi_name'].strip(), data['due_date'], float(data['amount'])))
+        elif type == 'event':
+            conn.execute('INSERT INTO events (event_name, event_date, notes) VALUES (?, ?, ?)',
+                         (data['event_name'].strip(), data['event_date'], data.get('notes', '').strip()))
+        elif type == 'monthly_bill':
+            conn.execute('INSERT INTO monthly_bills (bill_name, amount, due_date) VALUES (?, ?, ?)',
+                         (data['bill_name'].strip(), float(data['amount']), data['due_date']))
+        elif type == 'custom_bill':
+            conn.execute('INSERT INTO custom_bills (bill_name, bill_type, due_date, amount) VALUES (?, ?, ?, ?)',
+                         (data['bill_name'].strip(), data['bill_type'].strip(), data['due_date'], float(data['amount'])))
+        conn.commit()
+    finally:
+        conn.close()
     return redirect(url_for('dashboard'))
 
 @app.route('/edit/<type>/<int:id>', methods=['POST'])
 def edit_item(type, id):
-    conn = get_db_connection()
     data = request.form
+    errors = []
+    
     if type == 'recharge':
-        conn.execute('UPDATE recharges SET contact_name=?, recharge_date=?, valid_days=?, plan_amount=? WHERE id=?',
-                     (data['contact_name'], data['recharge_date'], data['valid_days'], data['plan_amount'], id))
+        if not validate_required(data.get('contact_name')):
+            errors.append('Contact name is required')
+        if not validate_date(data.get('recharge_date')):
+            errors.append('Invalid recharge date')
+        if not validate_amount(data.get('valid_days')) or int(data.get('valid_days', 0)) <= 0:
+            errors.append('Valid days must be positive')
+        if not validate_amount(data.get('plan_amount')):
+            errors.append('Plan amount must be positive')
     elif type == 'emi':
-        conn.execute('UPDATE emis SET emi_name=?, due_date=?, amount=? WHERE id=?',
-                     (data['emi_name'], data['due_date'], data['amount'], id))
+        if not validate_required(data.get('emi_name')):
+            errors.append('EMI name is required')
+        if not validate_date(data.get('due_date')):
+            errors.append('Invalid due date')
+        if not validate_amount(data.get('amount')):
+            errors.append('Amount must be positive')
     elif type == 'event':
-        conn.execute('UPDATE events SET event_name=?, event_date=?, notes=? WHERE id=?',
-                     (data['event_name'], data['event_date'], data['notes'], id))
+        if not validate_required(data.get('event_name')):
+            errors.append('Event name is required')
+        if not validate_date(data.get('event_date')):
+            errors.append('Invalid event date')
     elif type == 'monthly':
-        conn.execute('UPDATE monthly_bills SET bill_name=?, amount=?, due_date=? WHERE id=?',
-                     (data['bill_name'], data['amount'], data['due_date'], id))
+        if not validate_required(data.get('bill_name')):
+            errors.append('Bill name is required')
+        if not validate_amount(data.get('amount')):
+            errors.append('Amount must be positive')
+        if not validate_date(data.get('due_date')):
+            errors.append('Invalid due date')
     elif type == 'custom':
-        conn.execute('UPDATE custom_bills SET bill_name=?, bill_type=?, due_date=?, amount=? WHERE id=?',
-                     (data['bill_name'], data['bill_type'], data['due_date'], data['amount'], id))
-    conn.commit()
-    conn.close()
+        if not validate_required(data.get('bill_name')):
+            errors.append('Bill name is required')
+        if not validate_required(data.get('bill_type')):
+            errors.append('Bill type is required')
+        if not validate_date(data.get('due_date')):
+            errors.append('Invalid due date')
+        if not validate_amount(data.get('amount')):
+            errors.append('Amount must be positive')
+    else:
+        abort(400)
+    
+    if errors:
+        return jsonify({'errors': errors}), 400
+    
+    conn = get_db_connection()
+    try:
+        if type == 'recharge':
+            conn.execute('UPDATE recharges SET contact_name=?, recharge_date=?, valid_days=?, plan_amount=? WHERE id=?',
+                         (data['contact_name'].strip(), data['recharge_date'], int(data['valid_days']), float(data['plan_amount']), id))
+        elif type == 'emi':
+            conn.execute('UPDATE emis SET emi_name=?, due_date=?, amount=? WHERE id=?',
+                         (data['emi_name'].strip(), data['due_date'], float(data['amount']), id))
+        elif type == 'event':
+            conn.execute('UPDATE events SET event_name=?, event_date=?, notes=? WHERE id=?',
+                         (data['event_name'].strip(), data['event_date'], data.get('notes', '').strip(), id))
+        elif type == 'monthly':
+            conn.execute('UPDATE monthly_bills SET bill_name=?, amount=?, due_date=? WHERE id=?',
+                         (data['bill_name'].strip(), float(data['amount']), data['due_date'], id))
+        elif type == 'custom':
+            conn.execute('UPDATE custom_bills SET bill_name=?, bill_type=?, due_date=?, amount=? WHERE id=?',
+                         (data['bill_name'].strip(), data['bill_type'].strip(), data['due_date'], float(data['amount']), id))
+        conn.commit()
+    finally:
+        conn.close()
     return redirect(url_for('dashboard'))
 
 @app.route('/get_item/<type>/<int:id>')
@@ -210,4 +325,4 @@ def paid_bills():
     return render_template('paid.html', paid_bills=all_paid_bills)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=os.environ.get('FLASK_DEBUG', '0') == '1')

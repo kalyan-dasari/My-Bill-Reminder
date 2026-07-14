@@ -1,3 +1,10 @@
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    const div = document.createElement('div');
+    div.textContent = String(str);
+    return div.innerHTML;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const itemTypeSelect = document.getElementById('itemType');
     const addItemForm = document.getElementById('addItemForm');
@@ -127,83 +134,83 @@ document.addEventListener('DOMContentLoaded', function() {
                     formHTML = `
                         <div class="mb-3">
                             <label for="editContactName" class="form-label">Contact Name</label>
-                            <input type="text" class="form-control" id="editContactName" name="contact_name" value="${data.contact_name}" required>
+                            <input type="text" class="form-control" id="editContactName" name="contact_name" value="${escapeHtml(data.contact_name)}" required>
                         </div>
                         <div class="mb-3">
                             <label for="editRechargeDate" class="form-label">Recharge Date</label>
-                            <input type="date" class="form-control" id="editRechargeDate" name="recharge_date" value="${data.recharge_date}" required>
+                            <input type="date" class="form-control" id="editRechargeDate" name="recharge_date" value="${escapeHtml(data.recharge_date)}" required>
                         </div>
                         <div class="mb-3">
                             <label for="editValidDays" class="form-label">Valid Days</label>
-                            <input type="number" class="form-control" id="editValidDays" name="valid_days" value="${data.valid_days}" required>
+                            <input type="number" class="form-control" id="editValidDays" name="valid_days" value="${escapeHtml(data.valid_days)}" required>
                         </div>
                         <div class="mb-3">
                             <label for="editPlanAmount" class="form-label">Plan Amount</label>
-                            <input type="number" step="0.01" class="form-control" id="editPlanAmount" name="plan_amount" value="${data.plan_amount}" required>
+                            <input type="number" step="0.01" class="form-control" id="editPlanAmount" name="plan_amount" value="${escapeHtml(data.plan_amount)}" required>
                         </div>
                     `;
                 } else if (itemType === 'emi') {
                     formHTML = `
                         <div class="mb-3">
                             <label for="editEmiName" class="form-label">EMI Name</label>
-                            <input type="text" class="form-control" id="editEmiName" name="emi_name" value="${data.emi_name}" required>
+                            <input type="text" class="form-control" id="editEmiName" name="emi_name" value="${escapeHtml(data.emi_name)}" required>
                         </div>
                         <div class="mb-3">
                             <label for="editDueDate" class="form-label">Due Date</label>
-                            <input type="date" class="form-control" id="editDueDate" name="due_date" value="${data.due_date}" required>
+                            <input type="date" class="form-control" id="editDueDate" name="due_date" value="${escapeHtml(data.due_date)}" required>
                         </div>
                         <div class="mb-3">
                             <label for="editAmount" class="form-label">Amount</label>
-                            <input type="number" step="0.01" class="form-control" id="editAmount" name="amount" value="${data.amount}" required>
+                            <input type="number" step="0.01" class="form-control" id="editAmount" name="amount" value="${escapeHtml(data.amount)}" required>
                         </div>
                     `;
                 } else if (itemType === 'event') {
                     formHTML = `
                         <div class="mb-3">
                             <label for="editEventName" class="form-label">Event Name</label>
-                            <input type="text" class="form-control" id="editEventName" name="event_name" value="${data.event_name}" required>
+                            <input type="text" class="form-control" id="editEventName" name="event_name" value="${escapeHtml(data.event_name)}" required>
                         </div>
                         <div class="mb-3">
                             <label for="editEventDate" class="form-label">Date</label>
-                            <input type="date" class="form-control" id="editEventDate" name="event_date" value="${data.event_date}" required>
+                            <input type="date" class="form-control" id="editEventDate" name="event_date" value="${escapeHtml(data.event_date)}" required>
                         </div>
                         <div class="mb-3">
                             <label for="editNotes" class="form-label">Notes</label>
-                            <textarea class="form-control" id="editNotes" name="notes">${data.notes || ''}</textarea>
+                            <textarea class="form-control" id="editNotes" name="notes">${escapeHtml(data.notes)}</textarea>
                         </div>
                     `;
                 } else if (itemType === 'monthly') {
                     formHTML = `
                         <div class="mb-3">
                             <label for="editBillName" class="form-label">Bill Name</label>
-                            <input type="text" class="form-control" id="editBillName" name="bill_name" value="${data.bill_name}" required>
+                            <input type="text" class="form-control" id="editBillName" name="bill_name" value="${escapeHtml(data.bill_name)}" required>
                         </div>
                         <div class="mb-3">
                             <label for="editAmount" class="form-label">Amount</label>
-                            <input type="number" step="0.01" class="form-control" id="editAmount" name="amount" value="${data.amount}" required>
+                            <input type="number" step="0.01" class="form-control" id="editAmount" name="amount" value="${escapeHtml(data.amount)}" required>
                         </div>
                         <div class="mb-3">
                             <label for="editDueDate" class="form-label">Due Date</label>
-                            <input type="date" class="form-control" id="editDueDate" name="due_date" value="${data.due_date}" required>
+                            <input type="date" class="form-control" id="editDueDate" name="due_date" value="${escapeHtml(data.due_date)}" required>
                         </div>
                     `;
                 } else if (itemType === 'custom') {
                     formHTML = `
                         <div class="mb-3">
                             <label for="editBillName" class="form-label">Bill Name</label>
-                            <input type="text" class="form-control" id="editBillName" name="bill_name" value="${data.bill_name}" required>
+                            <input type="text" class="form-control" id="editBillName" name="bill_name" value="${escapeHtml(data.bill_name)}" required>
                         </div>
                         <div class="mb-3">
                             <label for="editBillType" class="form-label">Type (e.g., Wi-Fi)</label>
-                            <input type="text" class="form-control" id="editBillType" name="bill_type" value="${data.bill_type}" required>
+                            <input type="text" class="form-control" id="editBillType" name="bill_type" value="${escapeHtml(data.bill_type)}" required>
                         </div>
                         <div class="mb-3">
                             <label for="editDueDate" class="form-label">Due Date</label>
-                            <input type="date" class="form-control" id="editDueDate" name="due_date" value="${data.due_date}" required>
+                            <input type="date" class="form-control" id="editDueDate" name="due_date" value="${escapeHtml(data.due_date)}" required>
                         </div>
                         <div class="mb-3">
                             <label for="editAmount" class="form-label">Amount</label>
-                            <input type="number" step="0.01" class="form-control" id="editAmount" name="amount" value="${data.amount}" required>
+                            <input type="number" step="0.01" class="form-control" id="editAmount" name="amount" value="${escapeHtml(data.amount)}" required>
                         </div>
                     `;
                 }
